@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -39,14 +38,12 @@
     .container {
       max-width: 280px;
       min-height: 300px;
-
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       box-shadow: 0 0 20px rgba(0,0,0,0.5);
       font-family: 'Audiowide', 'Segoe UI', sans-serif;
-
       background: rgba(255, 255, 255, 0.06);
       margin-top: 20px;
       padding: 20px;
@@ -68,7 +65,6 @@
     .multiplier {
       font-family: 'Audiowide', sans-serif;
       letter-spacing: 1px;
-
       font-size: 34px;
       margin: 15px 0 5px;
       font-weight: bold;
@@ -84,7 +80,6 @@
     }
     .next-time {
       font-family: 'Audiowide', sans-serif;
-
       font-size: 14px;
       margin-bottom: 10px;
     }
@@ -193,19 +188,11 @@
   </div>
 
   <script>
-    const themes = [
-      { bg: "#0f0f1a", text: "#ffffff", accent: "#00ff88" },
-      { bg: "#1a1a2e", text: "#e5e5e5", accent: "#ff6b6b" },
-      { bg: "#000000", text: "#ffffff", accent: "#ff00cc" },
-      { bg: "#2e3a59", text: "#f1f1f1", accent: "#ffcc00" },
-      { bg: "#191919", text: "#00ffee", accent: "#ff8800" },
-      { bg: "#102027", text: "#ffffff", accent: "#4dd0e1" },
-      { bg: "#0a0f0d", text: "#fefefe", accent: "#76ff03" },
-      { bg: "#2c2c2c", text: "#fff", accent: "#29b6f6" },
-      { bg: "#212121", text: "#ffffff", accent: "#f44336" },
-      { bg: "#111", text: "#eee", accent: "#ffeb3b" }
-    ];
-
+    const themes = [...Array(10)].map((_, i) => ({
+      bg: ['#0f0f1a','#1a1a2e','#000000','#2e3a59','#191919','#102027','#0a0f0d','#2c2c2c','#212121','#111'][i],
+      text: ['#ffffff','#e5e5e5','#ffffff','#f1f1f1','#00ffee','#ffffff','#fefefe','#fff','#ffffff','#eee'][i],
+      accent: ['#00ff88','#ff6b6b','#ff00cc','#ffcc00','#ff8800','#4dd0e1','#76ff03','#29b6f6','#f44336','#ffeb3b'][i]
+    }));
     let currentThemeIndex = parseInt(localStorage.getItem("themeIndex") || "0");
     applyTheme(currentThemeIndex);
 
@@ -216,12 +203,10 @@
       document.documentElement.style.setProperty('--accent', theme.accent);
       localStorage.setItem("themeIndex", index);
     }
-
     function toggleTheme() {
       currentThemeIndex = (currentThemeIndex + 1) % themes.length;
       applyTheme(currentThemeIndex);
     }
-
     function unlockApp() {
       document.getElementById("joinGate").classList.add("hidden");
       document.getElementById("predictorApp").classList.remove("hidden");
@@ -233,6 +218,20 @@
     const historyEl = document.getElementById("historyList");
     const accuracyBar = document.getElementById("accuracyBar");
 
+    const timerBar = document.createElement("div");
+    timerBar.className = "bar";
+    const timerFill = document.createElement("div");
+    timerFill.className = "bar-fill";
+    timerFill.id = "cooldownBar";
+    timerBar.appendChild(timerFill);
+    document.getElementById("predictorApp").insertBefore(timerBar, document.querySelector(".history"));
+
+    let totalCD = 10;
+    function updateCooldown(current) {
+      const width = ((totalCD - current) / totalCD) * 100;
+      document.getElementById("cooldownBar").style.width = width + "%";
+    }
+
     function startGameLoop() {
       let multiplier = 1.00;
       let crashPoint = (Math.random() * 9 + 1.1).toFixed(2);
@@ -241,7 +240,7 @@
       accuracyBar.style.width = `${(crashPoint / 10) * 100}%`;
 
       const interval = setInterval(() => {
-        multiplier += 0.05;
+        multiplier += 0.01;
         multiplier = parseFloat(multiplier.toFixed(2));
 
         if (multiplier >= crashPoint) {
@@ -249,16 +248,17 @@
           multiplierEl.className = "multiplier red";
           multiplierEl.textContent = `💥 ${multiplier}x`;
           updateHistory(multiplier);
-
           if (navigator.vibrate) navigator.vibrate([200, 100, 150]);
 
-          const delay = Math.floor(Math.random() * 4) + 8;
-          let countdown = delay;
+          totalCD = Math.floor(Math.random() * 4) + 8;
+          let countdown = totalCD;
           timerEl.classList.add("active");
           timerEl.textContent = `Next round in: ${countdown}s`;
+          updateCooldown(0);
 
           const cdInterval = setInterval(() => {
             countdown--;
+            updateCooldown(totalCD - countdown);
             if (countdown <= 0) {
               clearInterval(cdInterval);
               startGameLoop();
@@ -269,7 +269,7 @@
         } else {
           multiplierEl.textContent = `${multiplier.toFixed(2)}x`;
         }
-      }, 100);
+      }, 120);
     }
 
     function updateHistory(multiplier) {
@@ -282,71 +282,14 @@
     }
   </script>
 
-<audio id="bgMusic" autoplay loop hidden>
-  <source src="https://files.catbox.moe/pzyxfz.mp3" type="audio/mpeg">
-</audio>
-<script>
-  // Voice prompt (Hinglish)
-  const voiceMsg = new SpeechSynthesisUtterance("Doston, Telegram channel apkmodderkings ko abhi join karein!");
-  voiceMsg.lang = "hi-IN";
-  setTimeout(() => speechSynthesis.speak(voiceMsg), 3000);
+  <audio id="bgMusic" autoplay loop hidden>
+    <source src="https://files.catbox.moe/pzyxfz.mp3" type="audio/mpeg">
+  </audio>
+  <script>
+    const voiceMsg = new SpeechSynthesisUtterance("Doston, Telegram channel apkmodderkings ko abhi join karein!");
+    voiceMsg.lang = "hi-IN";
+    setTimeout(() => speechSynthesis.speak(voiceMsg), 3000);
+  </script>
 
-  // Cooldown Bar
-  const timerBar = document.createElement("div");
-  timerBar.className = "bar";
-  const timerFill = document.createElement("div");
-  timerFill.className = "bar-fill";
-  timerFill.id = "cooldownBar";
-  timerBar.appendChild(timerFill);
-  document.getElementById("predictorApp").insertBefore(timerBar, document.querySelector(".history"));
-
-  let totalCD = 10;
-  function updateCooldown(current) {
-    const width = ((totalCD - current) / totalCD) * 100;
-    document.getElementById("cooldownBar").style.width = width + "%";
-  }
-
-  // Modify game loop to include cooldown
-  function startGameLoop() {
-    let multiplier = 1.00;
-    let crashPoint = (Math.random() * 9 + 1.1).toFixed(2);
-    multiplierEl.className = "multiplier green";
-    timerEl.classList.remove("active");
-    accuracyBar.style.width = `${(crashPoint / 10) * 100}%`;
-
-    const interval = setInterval(() => {
-      multiplier += 0.05;
-      multiplier = parseFloat(multiplier.toFixed(2));
-
-      if (multiplier >= crashPoint) {
-        clearInterval(interval);
-        multiplierEl.className = "multiplier red";
-        multiplierEl.textContent = `💥 ${multiplier}x`;
-        updateHistory(multiplier);
-        if (navigator.vibrate) navigator.vibrate([200, 100, 150]);
-
-        totalCD = Math.floor(Math.random() * 4) + 8;
-        let countdown = totalCD;
-        timerEl.classList.add("active");
-        timerEl.textContent = `Next round in: ${countdown}s`;
-        updateCooldown(0);
-
-        const cdInterval = setInterval(() => {
-          countdown--;
-          updateCooldown(totalCD - countdown);
-          if (countdown <= 0) {
-            clearInterval(cdInterval);
-            startGameLoop();
-          } else {
-            timerEl.textContent = `Next round in: ${countdown}s`;
-          }
-        }, 1000);
-      } else {
-        multiplierEl.textContent = `${multiplier.toFixed(2)}x`;
-      }
-    }, 100);
-  }
-</script>
 </body>
-
 </html>
